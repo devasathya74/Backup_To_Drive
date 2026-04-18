@@ -77,7 +77,22 @@ class AuthManager:
                     raise FileNotFoundError(f"OAuth credentials file not found: {creds_path}")
                 
                 flow = InstalledAppFlow.from_client_secrets_file(creds_path, self.scopes)
-                creds = flow.run_local_server(port=0)
+                
+                try:
+                    # Try to open browser automatically
+                    creds = flow.run_local_server(port=0)
+                except Exception:
+                    # Fallback for Termux/SSH/Headless: provide URL manually
+                    self.logger.warning("Could not open browser automatically. Switching to manual mode...")
+                    print(f"\n{'-'*60}")
+                    print("HEADLESS AUTHENTICATION REQUIRED")
+                    print(f"{'-'*60}")
+                    print("1. Copy the URL below and paste it into your device's browser.")
+                    print("2. Log in and allow permissions.")
+                    print("3. After completion, this script will continue automatically.")
+                    print(f"{'-'*60}\n")
+                    
+                    creds = flow.run_local_server(port=0, open_browser=False)
 
             with open(token_path, 'wb') as token:
                 pickle.dump(creds, token)

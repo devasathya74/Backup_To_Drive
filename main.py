@@ -77,6 +77,11 @@ def main():
         source_path = config['backup'].get('source_path', '.')
         plat = get_platform()
         
+        # PROACTIVE: On Android, if default root is chosen, force shared storage
+        # This prevents backing up the app's internal home folder by accident.
+        if isinstance(plat, TermuxPlatform) and source_path in ['.', './']:
+            source_path = "AUTO_ROOT"
+
         if source_path == "AUTO_ROOT":
             source_path = plat.get_auto_root()
             logger.info(f"Resolved AUTO_ROOT to: {source_path}")
