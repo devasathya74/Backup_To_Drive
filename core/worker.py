@@ -58,8 +58,8 @@ class BackupWorker:
                     elif cpu_usage > 80 or mem_usage > 85:
                         self.logger.info(f"High Load detected (CPU: {cpu_usage}%, RAM: {mem_usage}%). Throttling submission...")
                         time.sleep(2)
-                except (PermissionError, OSError):
-                    # Fallback for Termux/Android where /proc access is restricted
+                except Exception:
+                    # Fallback for Termux/Android where /proc or system stats are restricted
                     pass
 
                 # Acquire semaphore before submitting (blocks if queue is full)
@@ -72,7 +72,12 @@ class BackupWorker:
 
     def _process_file(self, file_path, source_path, root_folder_id):
         file_name = os.path.basename(file_path)
-        stats = os.stat(file_path)
+        try:
+            stats = os.stat(file_path)
+        except PermissionError:
+            self.logger.warning(f"Permission Denied (Skipping): {file_path}")
+            self.progress_manager.update_file_status("skipped", file_path)
+            return
         
         try:
             # Build folder structure on Drive

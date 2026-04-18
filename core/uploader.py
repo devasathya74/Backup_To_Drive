@@ -7,9 +7,13 @@ from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_excep
 from core.logger import get_logger
 
 # Shared Process Pool for CPU-bound tasks (Hashing)
-# Max workers should be related to CPU core count (psutil can help)
 import psutil
-_HASHING_POOL = ProcessPoolExecutor(max_workers=max(1, psutil.cpu_count(logical=False) or 1))
+try:
+    _cpu_count = psutil.cpu_count(logical=False) or 1
+except (PermissionError, OSError):
+    _cpu_count = 1
+
+_HASHING_POOL = ProcessPoolExecutor(max_workers=max(1, _cpu_count))
 
 def compute_file_md5(file_path):
     """Stand-alone function for process-based hashing."""

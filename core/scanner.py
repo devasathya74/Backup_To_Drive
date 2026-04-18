@@ -24,17 +24,25 @@ class FileScanner:
         
         system_excludes = [e.lower() for e in self.platform.get_system_excludes()]
 
-        for root, dirs, files in os.walk(root_path, topdown=True):
+        def on_walk_error(error):
+            self.logger.warning(f"Scan error (Skipping folder): {error}")
+
+        for root, dirs, files in os.walk(root_path, topdown=True, onerror=on_walk_error):
             if self.stop_event and self.stop_event.is_set():
                 break
+            
             # Filter directories in-place to prevent further descent
             original_dirs = list(dirs)
-            dirs[:] = [
-                d for d in dirs 
-                if d.lower() not in system_excludes 
-                and not (self.skip_hidden and self.platform.should_skip_dir(d, os.path.join(root, d)))
-                and not os.path.islink(os.path.join(root, d))
-            ]
+            try:
+                dirs[:] = [
+                    d for d in dirs 
+                    if d.lower() not in system_excludes 
+                    and not (self.skip_hidden and self.platform.should_skip_dir(d, os.path.join(root, d)))
+                    and not os.path.islink(os.path.join(root, d))
+                ]
+            except PermissionError:
+                dirs[:] = [] # Clear if we can't search this branch
+                continue
             
             # Log skipped directories for transparency
             skipped = set(original_dirs) - set(dirs)
