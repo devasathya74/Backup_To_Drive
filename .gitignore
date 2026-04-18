@@ -1,0 +1,24 @@
+# Python junk
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Google Credentials (DO NOT PUSH)
+credentials.json
+service_account.json
+token.pickle
+
+# Local Databases & Logs
+backup_state.db
+logs/
+*.log
+
+# Environment
+.env
+venv/
+.venv/
+.idea/
+.vscode/
+
+# Config (optional, depends if user wants to share it)
+# config.json

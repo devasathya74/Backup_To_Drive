@@ -1,0 +1,43 @@
+{
+    "auth": {
+        "mode": "oauth",
+        "service_account_path": "service_account.json",
+        "oauth_credentials_path": "credentials.json",
+        "token_path": "token.pickle"
+    },
+    "backup": {
+        "source_path": "AUTO_ROOT",
+        "root_folder_id": "root",
+        "dry_run": false,
+        "skip_hidden": true,
+        "excluded_extensions": [
+            ".tmp",
+            ".temp",
+            ".bak",
+            ".old",
+            ".log",
+            ".lnk",
+            ".ini",
+            ".db",
+            ".dat",
+            ".sys",
+            ".dll",
+            ".exe",
+            ".msi",
+            ".msp",
+            ".cab",
+            ".iso",
+            ".vhd",
+            ".vmdk"
+        ]
+    },
+    "performance": {
+        "max_workers": 25,
+        "chunk_size_mb": 5,
+        "batch_delete_size": 100
+    },
+    "logging": {
+        "log_dir": "logs",
+        "log_level": "INFO"
+    }
+}
