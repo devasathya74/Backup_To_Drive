@@ -71,30 +71,33 @@ class BackupWorker:
 
 
     def _process_file(self, file_path, source_path, root_folder_id):
+        # Calculate full relative path for clear logging
+        rel_file_path = os.path.relpath(file_path, source_path)
         file_name = os.path.basename(file_path)
+        
         try:
             stats = os.stat(file_path)
         except PermissionError:
-            self.logger.warning(f"Permission Denied (Skipping): {file_path}")
+            self.logger.warning(f"[SKIPPED] {rel_file_path} | Reason: Permission Denied")
             self.progress_manager.update_file_status("skipped", file_path)
             return
         
         try:
             # Build folder structure on Drive
-            rel_path = os.path.relpath(os.path.dirname(file_path), source_path)
-            parent_id = self._recursive_get_folder(rel_path, root_folder_id)
+            rel_dir = os.path.relpath(os.path.dirname(file_path), source_path)
+            parent_id = self._recursive_get_folder(rel_dir, root_folder_id)
 
             if not parent_id:
-                self.logger.error(f"Failed to resolve parent folder for {file_path}")
+                self.logger.error(f"[ERROR] {rel_file_path} | Reason: Folder resolution failed")
                 self.progress_manager.update_file_status("error", file_path)
                 return
 
             # Perform upload
-            self.logger.info(f"Uploading {file_name}...")
+            self.logger.info(f"[UPLOADING] {rel_file_path}")
             response = self.uploader.upload_file(file_path, parent_id)
             
             if response and 'id' in response:
-                # Update state with hash if available
+                # Update state
                 self.state_manager.update_file(
                     path=file_path,
                     size=stats.st_size,
@@ -103,12 +106,14 @@ class BackupWorker:
                     drive_id=response['id'],
                     status='uploaded'
                 )
+                self.logger.info(f"[SUCCESS] {rel_file_path} | Status: Uploaded")
                 self.progress_manager.update_file_status("uploaded", file_path, stats.st_size)
             else:
+                self.logger.error(f"[ERROR] {rel_file_path} | Reason: Upload result invalid")
                 self.progress_manager.update_file_status("error", file_path)
                 
         except Exception as e:
-            self.logger.error(f"Failed to process {file_name}: {e}")
+            self.logger.error(f"[ERROR] {rel_file_path} | Reason: {str(e)}")
             self.progress_manager.update_file_status("error", file_path)
 
     def _recursive_get_folder(self, rel_path, root_id):
