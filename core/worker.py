@@ -46,17 +46,21 @@ class BackupWorker:
                     break
 
                 # --- OVERLOAD PROTECTION ---
-                cpu_usage = psutil.cpu_percent()
-                mem_usage = psutil.virtual_memory().percent
-                
-                if cpu_usage > 90 or mem_usage > 90:
-                    self.logger.warning(f"CRITICAL LOAD: CPU {cpu_usage}% | RAM {mem_usage}%. Throttling...")
-                    time.sleep(5)
-                    continue
+                try:
+                    cpu_usage = psutil.cpu_percent()
+                    mem_usage = psutil.virtual_memory().percent
+                    
+                    if cpu_usage > 90 or mem_usage > 90:
+                        self.logger.warning(f"CRITICAL LOAD: CPU {cpu_usage}% | RAM {mem_usage}%. Throttling...")
+                        time.sleep(5)
+                        continue
 
-                elif cpu_usage > 80 or mem_usage > 85:
-                    self.logger.info(f"High Load detected (CPU: {cpu_usage}%, RAM: {mem_usage}%). Throttling submission...")
-                    time.sleep(2)
+                    elif cpu_usage > 80 or mem_usage > 85:
+                        self.logger.info(f"High Load detected (CPU: {cpu_usage}%, RAM: {mem_usage}%). Throttling submission...")
+                        time.sleep(2)
+                except (PermissionError, OSError):
+                    # Fallback for Termux/Android where /proc access is restricted
+                    pass
 
                 # Acquire semaphore before submitting (blocks if queue is full)
                 semaphore.acquire()
