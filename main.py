@@ -28,6 +28,8 @@ def get_platform():
         if 'TERMUX_VERSION' in os.environ:
             return TermuxPlatform()
         return LinuxPlatform()
+    elif system == 'android':
+        return TermuxPlatform()
     else:
         raise NotImplementedError(f"Platform {system} not supported yet.")
 
